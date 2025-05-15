@@ -5,13 +5,11 @@ import datetime
 
 class UserManager(BaseUserManager):
     def create_user(self, email, username,password):
-        user = User(email=email, username=username)
-        
+        user = User(email=email, username=username)        
         if password: 
             user.set_password(password)
         else:
             user.set_unusable_password()
-            
         user.save(using=self._db)
         return user
 
@@ -39,8 +37,6 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return self.email
-
-
        
     def has_perm(self, perm, obj=None):
         return True
@@ -52,6 +48,8 @@ class User(AbstractBaseUser):
     EMAIL_FIELD = "email"
 
     USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+
 
 class Follow(models.Model):
     follower = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="follow_follower")

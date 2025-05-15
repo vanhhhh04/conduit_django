@@ -3,13 +3,15 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.http import HttpResponse
+from django.contrib.auth.hashers import make_password
 # Create your views here.
 from .forms import UserForm 
+from .models import User 
 from .authentication import encode_jwt,decode_jwt
-from rest_framework.authtoken.models import Token
+# from rest_framework.authtoken.models import Token
 
 import json 
-
+import time 
 
 
 @csrf_exempt
@@ -22,17 +24,32 @@ def user_register(request):
             return HttpResponseBadRequest("Invalid JSON")
         data = data.get('user',{})
         form = UserForm(data)
-        payload = f"{data.get("username")}"
-        a = encode_jwt(payload=payload)
-        b = decode_jwt(a)
-        print(a)
-        print(b)
+
         if form.is_valid():
-            print("Authentication successfully")
+            form_data = form.cleaned_data 
+            email = form_data.get('email')
+            username = form_data.get('username')
+            password = form_data.get('password')          
+
+            user = User.objects.create(
+                username = username,
+                email = email,
+                password = make_password(password)
+            )
+            
+            payload = {
+                'user_ud': user.id,
+                'username': user.username,
+                'exp': int(time.time()) + 3600
+            }
+            
+            token = encode_jwt(payload)
+            print(token)
             response_data = {
-                "id": 1,
-                "username": "aaa",
-                "email": "a@gmail.com"
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'token': token 
             }
             return JsonResponse({"user": response_data}, status=200)
         else:
